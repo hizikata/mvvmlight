@@ -23,6 +23,7 @@ using System.Linq.Expressions;
 
 // ReSharper disable RedundantUsingDirective
 using System.Linq;
+using System.Collections;
 // ReSharper restore RedundantUsingDirective
 
 #if CMNATTR
@@ -35,8 +36,29 @@ namespace GalaSoft.MvvmLight
     /// A base class for objects of which the properties must be observable.
     /// </summary>
     //// [ClassInfo(typeof(ViewModelBase))]
-    public class ObservableObject : INotifyPropertyChanged /*, INotifyPropertyChanging*/
+    public class ObservableObject : INotifyPropertyChanged, INotifyDataErrorInfo/*, INotifyPropertyChanging*/
     {
+        #region INotifyDataErrorInfo Memebers
+        bool HasErrors { get; }
+
+        event EventHandler<DataErrorsChangedEventArgs> INotifyDataErrorInfo.ErrorsChanged
+        {
+            add
+            {
+                throw new NotImplementedException();
+            }
+
+            remove
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        IEnumerable GetErrors(string propertyName)
+        {
+            return new List<string>();
+        }
+        #endregion
         /// <summary>
         /// Occurs after a property value changes.
         /// </summary>
@@ -52,6 +74,8 @@ namespace GalaSoft.MvvmLight
                 return PropertyChanged;
             }
         }
+
+        bool INotifyDataErrorInfo.HasErrors => throw new NotImplementedException();
 
 #if !PORTABLE && !SL4
         /// <summary>
@@ -187,7 +211,7 @@ namespace GalaSoft.MvvmLight
         /// <param name="propertyName">(optional) The name of the property that
         /// changed.</param>
         [SuppressMessage(
-            "Microsoft.Design", 
+            "Microsoft.Design",
             "CA1030:UseEventsWhereAppropriate",
             Justification = "This cannot be an event")]
         public virtual void RaisePropertyChanged(
@@ -211,11 +235,7 @@ namespace GalaSoft.MvvmLight
         {
             VerifyPropertyName(propertyName);
 
-            var handler = PropertyChanged;
-            if (handler != null)
-            {
-                handler(this, new PropertyChangedEventArgs(propertyName));
-            }
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
 #if !PORTABLE && !SL4
@@ -253,7 +273,7 @@ namespace GalaSoft.MvvmLight
         /// <param name="propertyExpression">An expression identifying the property
         /// that changed.</param>
         [SuppressMessage(
-            "Microsoft.Design", 
+            "Microsoft.Design",
             "CA1030:UseEventsWhereAppropriate",
             Justification = "This cannot be an event")]
         [SuppressMessage(
@@ -285,9 +305,9 @@ namespace GalaSoft.MvvmLight
         /// <exception cref="ArgumentNullException">If the expression is null.</exception>
         /// <exception cref="ArgumentException">If the expression does not represent a property.</exception>
         [SuppressMessage(
-            "Microsoft.Design", 
+            "Microsoft.Design",
             "CA1011:ConsiderPassingBaseTypesAsParameters",
-            Justification = "This syntax is more convenient than the alternatives."), 
+            Justification = "This syntax is more convenient than the alternatives."),
          SuppressMessage(
             "Microsoft.Design",
             "CA1006:DoNotNestGenericTypesInMemberSignatures",
@@ -333,9 +353,9 @@ namespace GalaSoft.MvvmLight
         [SuppressMessage(
             "Microsoft.Design",
             "CA1006:DoNotNestGenericTypesInMemberSignatures",
-            Justification = "This syntax is more convenient than the alternatives."), 
+            Justification = "This syntax is more convenient than the alternatives."),
          SuppressMessage(
-            "Microsoft.Design", 
+            "Microsoft.Design",
             "CA1045:DoNotPassTypesByReference",
             MessageId = "1#",
             Justification = "This syntax is more convenient than the alternatives.")]
@@ -372,7 +392,7 @@ namespace GalaSoft.MvvmLight
         /// false otherwise. The event is not raised if the old
         /// value is equal to the new value.</returns>
         [SuppressMessage(
-            "Microsoft.Design", 
+            "Microsoft.Design",
             "CA1045:DoNotPassTypesByReference",
             MessageId = "1#",
             Justification = "This syntax is more convenient than the alternatives.")]
@@ -394,7 +414,7 @@ namespace GalaSoft.MvvmLight
             // ReSharper disable ExplicitCallerInfoArgument
             RaisePropertyChanged(propertyName);
             // ReSharper restore ExplicitCallerInfoArgument
-            
+
             return true;
         }
 
@@ -419,6 +439,11 @@ namespace GalaSoft.MvvmLight
             [CallerMemberName] string propertyName = null)
         {
             return Set(propertyName, ref field, newValue);
+        }
+
+        IEnumerable INotifyDataErrorInfo.GetErrors(string propertyName)
+        {
+            throw new NotImplementedException();
         }
 #endif
     }
